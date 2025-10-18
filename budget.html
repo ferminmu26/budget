@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💰 Mi Presupuesto</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <style>
+        body.light-mode {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%)
+        }
+
+        .content-wrapper {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px)
+        }
+
+        .dark-mode .content-wrapper {
+            background: rgba(30, 41, 59, 0.98);
+            color: #f1f5f9
+        }
+
+        .dark-mode .text-gray-800 {
+            color: #f1f5f9 !important
+        }
+
+        .dark-mode .text-gray-600 {
+            color: #cbd5e1 !important
+        }
+
+        .dark-mode .text-gray-400 {
+            color: #64748b !important
+        }
+
+        .dark-mode .text-gray-700 {
+            color: #e2e8f0 !important
+        }
+
+        .dark-mode .bg-gray-50 {
+            background-color: #0f172a !important
+        }
+
+        .dark-mode .bg-white {
+            background-color: #1e293b !important
+        }
+
+        .dark-mode .border-gray-200 {
+            border-color: #475569 !important
+        }
+
+        .dark-mode .border-b {
+            border-color: #475569 !important
+        }
+
+        .dark-mode input,
+        .dark-mode select {
+            background-color: #334155;
+            color: #f1f5f9
+        }
+
+        .dark-mode .hover\:bg-gray-50:hover {
+            background-color: #334155 !important
+        }
+
+        .dark-mode .hover\:bg-gray-700:hover {
+            background-color: #334155 !important
+        }
+
+        .light-mode #monthSelector {
+            background: white;
+            color: #1f2937;
+            border: 2px solid rgba(102, 126, 234, 0.4)
+        }
+
+        .dark-mode #monthSelector {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3)
+        }
+
+        .light-mode #monthSelector::-webkit-calendar-picker-indicator {
+            filter: invert(0)
+        }
+
+        .dark-mode #monthSelector::-webkit-calendar-picker-indicator {
+            filter: invert(1)
+        }
+
+        .light-mode .text-gray-800 {
+            color: #1f2937 !important
+        }
+
+        .light-mode .text-gray-700 {
+            color: #374151 !important
+        }
+
+        .light-mode .text-gray-600 {
+            color: #4b5563 !important
+        }
+
+        .light-mode h1,
+        .light-mode .flex-1 p {
+            color: #1f2937 !important
+        }
+
+        .dark-mode h1,
+        .dark-mode .flex-1 p {
+            color: #f1f5f9 !important
+        }
+
+        .light-mode .max-w-7xl p {
+            color: #1f2937 !important
+        }
+
+        .dark-mode .max-w-7xl p {
+            color: #f1f5f9 !important
+        }
+
+        .tab-active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: 2px solid transparent
+        }
+
+        .tab-btn {
+            transition: all 0.3s ease
+        }
+
+        .light-mode .tab-btn {
+            color: #1f2937;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(102, 126, 234, 0.3)
+        }
+
+        .light-mode .tab-btn:hover {
+            background: white;
+            border-color: rgba(102, 126, 234, 0.5)
+        }
+
+        .dark-mode .tab-btn {
+            color: white;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3)
+        }
+
+        .dark-mode .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5)
+        }
+
+        .hidden {
+            display: none
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px
+        }
+
+        .hamburger {
+            cursor: pointer
+        }
+
+        .hamburger div {
+            width: 25px;
+            height: 3px;
+            background: white;
+            margin: 5px 0;
+            transition: 0.3s
+        }
+
+        .hamburger.active .line1 {
+            transform: rotate(-45deg) translate(-5px, 6px)
+        }
+
+        .hamburger.active .line2 {
+            opacity: 0
+        }
+
+        .hamburger.active .line3 {
+            transform: rotate(45deg) translate(-5px, -6px)
+        }
+
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 280px;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: left 0.3s ease;
+            z-index: 1000;
+            padding: 20px;
+            box-shadow: 5px 0 15px rgba(0, 0, 0, 0.3)
+        }
+
+        .mobile-menu.active {
+            left: 0
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999
+        }
+
+        .overlay.active {
+            display: block
+        }
+
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%
+            }
+
+            50% {
+                background-position: 100% 50%
+            }
+
+            100% {
+                background-position: 0% 50%
+            }
+        }
+
+        .login-bg {
+            background: linear-gradient(135deg, #667eea, #764ba2, #f093fb, #667eea);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px)
+            }
+
+            50% {
+                transform: translateY(-20px)
+            }
+        }
+
+        .float-icon {
+            animation: float 3s ease-in-out infinite
+        }
+
+        .stat-card {
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px)
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2)
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 10px
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #764ba2, #667eea)
+        }
+    </style>
+</head>
+
+<body class="light-mode">
+    <div id="overlay" class="overlay" onclick="toggleMobileMenu()"></div>
+    <div id="mobileMenu" class="mobile-menu">
+        <div class="flex justify-start mb-8">
+            <div class="hamburger active" onclick="toggleMobileMenu()">
+                <div class="line1"></div>
+                <div class="line2"></div>
+                <div class="line3"></div>
+            </div>
+        </div>
+        <div class="flex flex-col gap-4">
+            <button onclick="toggleTheme();toggleMobileMenu();"
+                class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-4 rounded-xl font-bold text-lg transition flex items-center justify-center">
+                <span id="themeIconMobile" class="text-4xl">🌙</span>
+            </button>
+            <hr class="border-white border-opacity-30 my-2">
+            <button onclick="showTabMobile('overview')"
+                class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-6 py-4 rounded-xl font-bold text-lg transition">📊
+                Resumen</button>
+            <button onclick="showTabMobile('expenses')"
+                class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-6 py-4 rounded-xl font-bold text-lg transition">💸
+                Gastos</button>
+            <button onclick="showTabMobile('incomes')"
+                class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-6 py-4 rounded-xl font-bold text-lg transition">💰
+                Ingresos</button>
+            <button onclick="showTabMobile('installments')"
+                class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-6 py-4 rounded-xl font-bold text-lg transition">📅
+                Cuotas</button>
+        </div>
+    </div>
+    <div id="loginScreen" class="login-bg">
+        <div class="max-w-md w-full mx-4">
+            <div class="bg-white rounded-3xl shadow-2xl p-8 transform hover:scale-105 transition duration-300">
+                <div class="flex justify-center mb-6">
+                    <div class="float-icon bg-gradient-to-br from-purple-500 to-pink-500 rounded-full p-6 shadow-2xl">
+                        <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                            </path>
+                        </svg>
+                    </div>
+                </div>
+                <h1
+                    class="text-4xl md:text-5xl font-bold text-center mb-3 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    Mi Presupuesto</h1>
+                <p class="text-center text-gray-600 mb-8 text-lg">Controla tus finanzas de manera inteligente</p>
+                <div class="space-y-4 mb-8">
+                    <div class="flex items-center gap-3 p-3 bg-green-50 rounded-xl">
+                        <div class="bg-green-500 rounded-full p-2 flex-shrink-0">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                        <span class="font-semibold text-gray-700">Sincronización automática</span>
+                    </div>
+                    <div class="flex items-center gap-3 p-3 bg-blue-50 rounded-xl">
+                        <div class="bg-blue-500 rounded-full p-2 flex-shrink-0">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                                </path>
+                            </svg>
+                        </div>
+                        <span class="font-semibold text-gray-700">Gráficos en tiempo real</span>
+                    </div>
+                    <div class="flex items-center gap-3 p-3 bg-purple-50 rounded-xl">
+                        <div class="bg-purple-500 rounded-full p-2 flex-shrink-0">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                                </path>
+                            </svg>
+                        </div>
+                        <span class="font-semibold text-gray-700">100% seguro y privado</span>
+                    </div>
+                </div>
+                <button id="authorizeButton" onclick="handleAuthClick()"
+                    class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-3">
+                    <svg class="w-6 h-6" viewBox="0 0 24 24" fill="white">
+                        <path
+                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                        <path
+                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                        <path
+                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                        <path
+                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                    </svg>
+                    Conectar con Google Drive
+                </button>
+                <p class="text-center text-sm text-gray-500 mt-6 flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                            d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    Conexión segura mediante OAuth 2.0
+                </p>
+            </div>
+        </div>
+    </div>
+    <div id="mainApp" class="hidden min-h-screen p-4 md:p-6">
+        <div class="content-wrapper max-w-7xl mx-auto rounded-3xl shadow-2xl p-4 md:p-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                <div class="flex items-center gap-4 w-full md:w-auto">
+                    <div class="md:hidden hamburger bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg p-2"
+                        onclick="toggleMobileMenu()">
+                        <div class="line1"></div>
+                        <div class="line2"></div>
+                        <div class="line3"></div>
+                    </div>
+                    <div class="flex-1">
+                        <h1 class="text-2xl md:text-4xl font-bold mb-1">💰 Mi Presupuesto</h1>
+                        <p class="text-sm opacity-80">Guardado en Google Drive 📁</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                    <button onclick="toggleTheme()"
+                        class="hidden md:block p-3 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition">
+                        <span id="themeIcon" class="text-2xl">🌙</span>
+                    </button>
+                    <button onclick="checkDuplicates()"
+                        class="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 rounded-lg font-bold flex items-center gap-2 transition transform hover:scale-105 shadow-lg">🔍
+                        <span class="hidden sm:inline">Duplicados</span></button>
+                    <button onclick="toggleDollarConfig()"
+                        class="px-4 py-2 bg-green-400 hover:bg-green-500 text-green-900 rounded-lg font-bold transition transform hover:scale-105 shadow-lg">💵
+                        $<span id="dollarDisplay">1200</span></button>
+                    <input type="month" id="monthSelector"
+                        class="px-4 py-2 rounded-lg font-semibold backdrop-blur shadow-lg">
+                    <button onclick="handleSignoutClick()"
+                        class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-bold transition transform hover:scale-105 shadow-lg">Salir</button>
+                </div>
+            </div>
+            <div id="duplicateAlert"
+                class="hidden bg-yellow-100 border-2 border-yellow-400 rounded-2xl p-6 mb-6 shadow-lg">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="text-lg font-bold text-yellow-800">⚠️ Duplicados Encontrados</h3>
+                    <button onclick="document.getElementById('duplicateAlert').classList.add('hidden')"
+                        class="text-yellow-800 hover:text-yellow-900 font-bold text-xl">✕</button>
+                </div>
+                <div id="duplicateList" class="text-sm text-yellow-700"></div>
+            </div>
+            <div id="dollarConfig"
+                class="hidden bg-white bg-opacity-95 backdrop-blur border-2 border-green-300 rounded-2xl p-6 mb-6 shadow-lg">
+                <h3 class="text-lg font-bold mb-4">Configurar Cotización del Dólar</h3>
+                <div class="flex gap-4">
+                    <input type="number" id="dollarInput" value="1200"
+                        class="flex-1 px-4 py-3 border-2 rounded-xl text-lg">
+                    <button onclick="saveDollar()"
+                        class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-bold transition transform hover:scale-105 shadow-lg">Guardar</button>
+                </div>
+            </div>
+            <div class="hidden md:flex gap-3 mb-6 overflow-x-auto pb-2">
+                <button onclick="showTab('overview')" class="tab-btn px-8 py-3 rounded-xl font-bold transition">📊
+                    Resumen</button>
+                <button onclick="showTab('expenses')" class="tab-btn px-8 py-3 rounded-xl font-bold transition">💸
+                    Gastos</button>
+                <button onclick="showTab('incomes')" class="tab-btn px-8 py-3 rounded-xl font-bold transition">💰
+                    Ingresos</button>
+                <button onclick="showTab('installments')" class="tab-btn px-8 py-3 rounded-xl font-bold transition">📅
+                    Cuotas</button>
+            </div>
+            <div id="tab-overview" class="tab-content">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+                    <div
+                        class="stat-card bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white shadow-xl">
+                        <div class="text-green-100 mb-2 text-sm font-semibold">💰 Ingresos</div>
+                        <div class="text-2xl md:text-3xl font-bold" id="totalIncomes">$0.00</div>
+                    </div>
+                    <div
+                        class="stat-card bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-6 text-white shadow-xl">
+                        <div class="text-red-100 mb-2 text-sm font-semibold">💸 Gastos</div>
+                        <div class="text-2xl md:text-3xl font-bold" id="totalExpenses">$0.00</div>
+                    </div>
+                    <div id="balanceCard"
+                        class="stat-card bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-xl">
+                        <div class="text-blue-100 mb-2 text-sm font-semibold">📊 Balance</div>
+                        <div class="text-2xl md:text-3xl font-bold" id="balance">$0.00</div>
+                    </div>
+                    <div
+                        class="stat-card bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white shadow-xl">
+                        <div class="text-purple-100 mb-2 text-sm font-semibold">📅 Cuotas Futuras</div>
+                        <div class="text-2xl md:text-3xl font-bold" id="futureInstallments">$0.00</div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-white bg-opacity-95 backdrop-blur rounded-2xl p-6 shadow-xl">
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">📊 Gastos por Categoría</h3>
+                        <div class="chart-container"><canvas id="categoryChart"></canvas></div>
+                    </div>
+                    <div class="bg-white bg-opacity-95 backdrop-blur rounded-2xl p-6 shadow-xl">
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">📈 Ingresos vs Gastos</h3>
+                        <div class="chart-container"><canvas id="trendChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+            <div id="tab-expenses" class="tab-content hidden">
+                <div class="flex gap-3 mb-6 flex-wrap items-center">
+                    <button onclick="toggleForm('expenseForm')"
+                        class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition transform hover:scale-105">➕
+                        Agregar</button>
+                    <label
+                        class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg cursor-pointer transition transform hover:scale-105">📤
+                        CSV<input type="file" accept=".csv" onchange="importMovimientos(event)" class="hidden"></label>
+                    <select id="categoryFilter" onchange="updateDisplay()"
+                        class="px-4 py-3 border-2 rounded-xl font-semibold shadow-lg">
+                        <option value="">Todas las categorías</option>
+                        <option value="Alimentación">Alimentación</option>
+                        <option value="Transporte">Transporte</option>
+                        <option value="Vivienda">Vivienda</option>
+                        <option value="Servicios">Servicios</option>
+                        <option value="Entretenimiento">Entretenimiento</option>
+                        <option value="Salud">Salud</option>
+                        <option value="Educación">Educación</option>
+                        <option value="Compras">Compras</option>
+                        <option value="Tecnología">Tecnología</option>
+                        <option value="Otros">Otros</option>
+                    </select>
+                    <button id="deleteSelectedExpBtn" onclick="deleteSelected('expenses')"
+                        class="hidden bg-red-800 hover:bg-red-900 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition transform hover:scale-105">🗑️
+                        Eliminar (<span id="selectedExpCount">0</span>)</button>
+                </div>
+                <div id="expenseForm"
+                    class="hidden bg-white bg-opacity-95 backdrop-blur border-2 border-red-300 rounded-2xl p-6 mb-6 shadow-xl">
+                    <h3 id="expenseFormTitle" class="text-lg font-bold mb-4">Nuevo Gasto</h3>
+                    <input type="hidden" id="expEditId">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="date" id="expDate" class="px-4 py-3 border-2 rounded-xl">
+                        <select id="expCategory" class="px-4 py-3 border-2 rounded-xl">
+                            <option>Alimentación</option>
+                            <option>Transporte</option>
+                            <option>Vivienda</option>
+                            <option>Servicios</option>
+                            <option>Entretenimiento</option>
+                            <option>Salud</option>
+                            <option>Educación</option>
+                            <option>Compras</option>
+                            <option>Tecnología</option>
+                            <option>Otros</option>
+                        </select>
+                        <input type="text" id="expDesc" placeholder="Descripción" class="px-4 py-3 border-2 rounded-xl">
+                        <input type="number" id="expAmount" placeholder="Monto" class="px-4 py-3 border-2 rounded-xl">
+                    </div>
+                    <div class="flex gap-3 mt-4">
+                        <button onclick="saveExpense()"
+                            class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition">Guardar</button>
+                        <button onclick="cancelEdit('expense')"
+                            class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-xl font-bold shadow-lg transition">Cancelar</button>
+                    </div>
+                </div>
+                <div class="bg-white bg-opacity-95 backdrop-blur rounded-2xl p-6 shadow-xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold">Gastos del Mes</h2>
+                        <label
+                            class="flex items-center gap-2 cursor-pointer bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                            <input type="checkbox" id="selectAllExp" onchange="toggleSelectAll('expenses')">
+                            <span class="text-sm font-bold">Todos</span>
+                        </label>
+                    </div>
+                    <div id="expensesList"></div>
+                </div>
+            </div>
+            <div id="tab-incomes" class="tab-content hidden">
+                <div class="flex gap-3 mb-6 flex-wrap items-center">
+                    <button onclick="toggleForm('incomeForm')"
+                        class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition transform hover:scale-105">➕
+                        Agregar</button>
+                    <button id="deleteSelectedIncBtn" onclick="deleteSelected('incomes')"
+                        class="hidden bg-red-800 hover:bg-red-900 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition transform hover:scale-105">🗑️
+                        Eliminar (<span id="selectedIncCount">0</span>)</button>
+                </div>
+                <div id="incomeForm"
+                    class="hidden bg-white bg-opacity-95 backdrop-blur border-2 border-green-300 rounded-2xl p-6 mb-6 shadow-xl">
+                    <h3 id="incomeFormTitle" class="text-lg font-bold mb-4">Nuevo Ingreso</h3>
+                    <input type="hidden" id="incEditId">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="date" id="incDate" class="px-4 py-3 border-2 rounded-xl">
+                        <select id="incType" class="px-4 py-3 border-2 rounded-xl">
+                            <option>Salario</option>
+                            <option>Freelance</option>
+                            <option>Inversiones</option>
+                            <option>Bonus</option>
+                            <option>Otros</option>
+                        </select>
+                        <input type="text" id="incDesc" placeholder="Descripción" class="px-4 py-3 border-2 rounded-xl">
+                        <input type="number" id="incAmount" placeholder="Monto" class="px-4 py-3 border-2 rounded-xl">
+                    </div>
+                    <div class="flex gap-3 mt-4">
+                        <button onclick="saveIncome()"
+                            class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition">Guardar</button>
+                        <button onclick="cancelEdit('income')"
+                            class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-xl font-bold shadow-lg transition">Cancelar</button>
+                    </div>
+                </div>
+                <div class="bg-white bg-opacity-95 backdrop-blur rounded-2xl p-6 shadow-xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold">Ingresos del Mes</h2>
+                        <label
+                            class="flex items-center gap-2 cursor-pointer bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                            <input type="checkbox" id="selectAllInc" onchange="toggleSelectAll('incomes')">
+                            <span class="text-sm font-bold">Todos</span>
+                        </label>
+                    </div>
+                    <div id="incomesList"></div>
+                </div>
+            </div>
+            <div id="tab-installments" class="tab-content hidden">
+                <div class="flex gap-3 mb-6 flex-wrap items-center">
+                    <label
+                        class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg cursor-pointer transition transform hover:scale-105">📤
+                        CSV<input type="file" accept=".csv" onchange="importCuotas(event)" class="hidden"></label>
+                    <button id="deleteSelectedInstBtn" onclick="deleteSelected('installments')"
+                        class="hidden bg-red-800 hover:bg-red-900 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition transform hover:scale-105">🗑️
+                        Eliminar (<span id="selectedInstCount">0</span>)</button>
+                </div>
+                <div class="bg-white bg-opacity-95 backdrop-blur rounded-2xl p-6 shadow-xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold">Cuotas Pendientes</h2>
+                        <label
+                            class="flex items-center gap-2 cursor-pointer bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                            <input type="checkbox" id="selectAllInst" onchange="toggleSelectAll('installments')">
+                            <span class="text-sm font-bold">Todos</span>
+                        </label>
+                    </div>
+                    <div id="installmentsList"></div>
+                </div>
+            </div>
+        </div>
+        <div
+            class="text-center text-sm mt-6 bg-white bg-opacity-20 backdrop-blur rounded-2xl p-4 shadow-xl max-w-7xl mx-auto">
+            <p class="font-bold">💡 Guardado automáticamente en tu Google Drive</p>
+            <p class="text-xs mt-1 opacity-80">Archivo: presupuesto-data.json</p>
+        </div>
+    </div>
+    <script>
+        const CLIENT_ID = '242682787553-c37e5kklt3cka476msvnl6s1a2mmd5n6.apps.googleusercontent.com';
+        const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+        const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+        let tokenClient, gapiInited = false, gisInited = false, driveFileId = null;
+        let data = { expenses: [], incomes: [], installments: [], dollarRate: 1200, theme: 'light' };
+        let selectedItems = { expenses: new Set(), incomes: new Set(), installments: new Set() };
+        let categoryChart = null, trendChart = null;
+        function toggleMobileMenu() { document.getElementById('mobileMenu').classList.toggle('active'); document.getElementById('overlay').classList.toggle('active'); document.querySelector('.hamburger').classList.toggle('active') }
+        function showTabMobile(tabName) { showTab(tabName); toggleMobileMenu() }
+        function gapiLoaded() { gapi.load('client', initializeGapiClient) }
+        async function initializeGapiClient() { await gapi.client.init({ discoveryDocs: [DISCOVERY_DOC] }); gapiInited = true; maybeEnableButtons() }
+        function gisLoaded() { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: CLIENT_ID, scope: SCOPES, callback: '' }); gisInited = true; maybeEnableButtons() }
+        function maybeEnableButtons() { if (gapiInited && gisInited) document.getElementById('authorizeButton').style.visibility = 'visible' }
+        function handleAuthClick() { tokenClient.callback = async (resp) => { if (resp.error !== undefined) throw (resp); document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('mainApp').classList.remove('hidden'); await loadFromDrive() }; if (gapi.client.getToken() === null) { tokenClient.requestAccessToken({ prompt: 'consent' }) } else { tokenClient.requestAccessToken({ prompt: '' }) } }
+        function handleSignoutClick() { const token = gapi.client.getToken(); if (token !== null) { google.accounts.oauth2.revoke(token.access_token); gapi.client.setToken(''); document.getElementById('mainApp').classList.add('hidden'); document.getElementById('loginScreen').classList.remove('hidden') } }
+        async function loadFromDrive() { try { const response = await gapi.client.drive.files.list({ q: "name='presupuesto-data.json'", spaces: 'drive', fields: 'files(id, name)' }); const files = response.result.files; if (files && files.length > 0) { driveFileId = files[0].id; const file = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' }); data = JSON.parse(file.body); document.getElementById('dollarDisplay').textContent = data.dollarRate; document.getElementById('dollarInput').value = data.dollarRate; if (data.theme) { applyTheme(data.theme) } } updateDisplay() } catch (err) { console.error('Error loading from Drive:', err) } }
+        async function saveToDrive() { try { const content = JSON.stringify(data); const blob = new Blob([content], { type: 'application/json' }); const metadata = { name: 'presupuesto-data.json', mimeType: 'application/json' }; const form = new FormData(); form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' })); form.append('file', blob); const method = driveFileId ? 'PATCH' : 'POST'; const url = driveFileId ? `https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart` : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart'; const response = await fetch(url, { method: method, headers: new Headers({ 'Authorization': 'Bearer ' + gapi.client.getToken().access_token }), body: form }); const result = await response.json(); if (!driveFileId) driveFileId = result.id } catch (err) { console.error('Error saving to Drive:', err); alert('Error al guardar en Drive') } }
+        function toggleTheme() { const newTheme = data.theme === 'dark' ? 'light' : 'dark'; data.theme = newTheme; applyTheme(newTheme); saveToDrive() }
+        function applyTheme(theme) { const body = document.body; if (theme === 'dark') { body.classList.remove('light-mode'); body.classList.add('dark-mode'); document.getElementById('themeIcon').textContent = '☀️'; const mobileIcon = document.getElementById('themeIconMobile'); if (mobileIcon) mobileIcon.textContent = '☀️' } else { body.classList.remove('dark-mode'); body.classList.add('light-mode'); document.getElementById('themeIcon').textContent = '🌙'; const mobileIcon = document.getElementById('themeIconMobile'); if (mobileIcon) mobileIcon.textContent = '🌙' } updateCharts() }
+        function checkDuplicates() { const alert = document.getElementById('duplicateAlert'); if (!alert.classList.contains('hidden')) { alert.classList.add('hidden'); return } const duplicates = []; const seen = new Map(); data.expenses.forEach((exp, idx) => { const key = `${exp.date}-${exp.description}-${exp.amount}`; if (seen.has(key)) { duplicates.push(`${exp.description} - ${exp.amount} (${exp.date})`) } else { seen.set(key, idx) } }); const list = document.getElementById('duplicateList'); if (duplicates.length > 0) { list.innerHTML = duplicates.map(d => `<p class="mb-1">• ${d}</p>`).join(''); alert.classList.remove('hidden') } else { alert.classList.add('hidden'); window.alert('✅ No se encontraron duplicados') } }
+        function toggleDollarConfig() { document.getElementById('dollarConfig').classList.toggle('hidden') }
+        async function saveDollar() { data.dollarRate = parseFloat(document.getElementById('dollarInput').value); document.getElementById('dollarDisplay').textContent = data.dollarRate; await saveToDrive(); toggleDollarConfig() }
+        function toggleForm(formId) { const form = document.getElementById(formId); const isHidden = form.classList.contains('hidden'); if (isHidden) { if (formId === 'expenseForm' && !document.getElementById('expEditId').value) { document.getElementById('expenseFormTitle').textContent = 'Nuevo Gasto' } else if (formId === 'incomeForm' && !document.getElementById('incEditId').value) { document.getElementById('incomeFormTitle').textContent = 'Nuevo Ingreso' } } form.classList.toggle('hidden') }
+        function showTab(tabName) { document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden')); document.querySelectorAll('.tab-btn').forEach(el => { el.classList.remove('tab-active') }); document.getElementById('tab-' + tabName).classList.remove('hidden'); const activeBtn = event?.target; if (activeBtn && activeBtn.classList.contains('tab-btn')) { activeBtn.classList.add('tab-active') } updateDisplay() }
+        function editExpense(id) { const exp = data.expenses.find(e => e.id === id); if (!exp) return; document.getElementById('expEditId').value = id; document.getElementById('expDate').value = exp.date; document.getElementById('expDesc').value = exp.description; document.getElementById('expAmount').value = exp.amount; document.getElementById('expCategory').value = exp.category; document.getElementById('expenseFormTitle').textContent = 'Modificar Gasto'; document.getElementById('expenseForm').classList.remove('hidden') }
+        function editIncome(id) { const inc = data.incomes.find(i => i.id === id); if (!inc) return; document.getElementById('incEditId').value = id; document.getElementById('incDate').value = inc.date; document.getElementById('incDesc').value = inc.description; document.getElementById('incAmount').value = inc.amount; document.getElementById('incType').value = inc.type; document.getElementById('incomeFormTitle').textContent = 'Modificar Ingreso'; document.getElementById('incomeForm').classList.remove('hidden') }
+        function cancelEdit(type) { if (type === 'expense') { document.getElementById('expEditId').value = ''; document.getElementById('expDesc').value = ''; document.getElementById('expAmount').value = ''; document.getElementById('expenseFormTitle').textContent = 'Nuevo Gasto'; toggleForm('expenseForm') } else { document.getElementById('incEditId').value = ''; document.getElementById('incDesc').value = ''; document.getElementById('incAmount').value = ''; document.getElementById('incomeFormTitle').textContent = 'Nuevo Ingreso'; toggleForm('incomeForm') } }
+        async function saveExpense() { const amount = parseFloat(document.getElementById('expAmount').value); const desc = document.getElementById('expDesc').value; const editId = document.getElementById('expEditId').value; if (!amount || !desc) { alert('Completa todos los campos'); return } if (editId) { const idx = data.expenses.findIndex(e => e.id == editId); if (idx !== -1) { data.expenses[idx].date = document.getElementById('expDate').value; data.expenses[idx].description = desc; data.expenses[idx].amount = amount; data.expenses[idx].category = document.getElementById('expCategory').value } document.getElementById('expEditId').value = '' } else { data.expenses.push({ id: Date.now(), date: document.getElementById('expDate').value, description: desc, amount: amount, category: document.getElementById('expCategory').value, type: 'manual' }) } await saveToDrive(); document.getElementById('expenseFormTitle').textContent = 'Nuevo Gasto'; toggleForm('expenseForm'); updateDisplay(); document.getElementById('expDesc').value = ''; document.getElementById('expAmount').value = '' }
+        async function saveIncome() { const amount = parseFloat(document.getElementById('incAmount').value); const desc = document.getElementById('incDesc').value; const editId = document.getElementById('incEditId').value; if (!amount || !desc) { alert('Completa todos los campos'); return } if (editId) { const idx = data.incomes.findIndex(i => i.id == editId); if (idx !== -1) { data.incomes[idx].date = document.getElementById('incDate').value; data.incomes[idx].description = desc; data.incomes[idx].amount = amount; data.incomes[idx].type = document.getElementById('incType').value } document.getElementById('incEditId').value = '' } else { data.incomes.push({ id: Date.now(), date: document.getElementById('incDate').value, description: desc, amount: amount, type: document.getElementById('incType').value }) } await saveToDrive(); document.getElementById('incomeFormTitle').textContent = 'Nuevo Ingreso'; toggleForm('incomeForm'); updateDisplay(); document.getElementById('incDesc').value = ''; document.getElementById('incAmount').value = '' }
+        function toggleItemSelection(type, id, checkbox) { if (checkbox.checked) { selectedItems[type].add(id) } else { selectedItems[type].delete(id) } updateSelectionUI(type) }
+        function toggleSelectAll(type) { const checkbox = document.getElementById('selectAll' + (type === 'expenses' ? 'Exp' : type === 'incomes' ? 'Inc' : 'Inst')); const selectedMonth = document.getElementById('monthSelector').value; const items = type === 'expenses' ? data.expenses.filter(e => e.date.startsWith(selectedMonth)) : type === 'incomes' ? data.incomes.filter(i => i.date.startsWith(selectedMonth)) : data.installments; if (checkbox.checked) { items.forEach(item => selectedItems[type].add(item.id)) } else { selectedItems[type].clear() } updateDisplay() }
+        function updateSelectionUI(type) { const count = selectedItems[type].size; const btn = document.getElementById('deleteSelected' + (type === 'expenses' ? 'Exp' : type === 'incomes' ? 'Inc' : 'Inst') + 'Btn'); const countSpan = document.getElementById('selected' + (type === 'expenses' ? 'Exp' : type === 'incomes' ? 'Inc' : 'Inst') + 'Count'); if (count > 0) { btn.classList.remove('hidden'); countSpan.textContent = count } else { btn.classList.add('hidden') } }
+        async function deleteSelected(type) { if (selectedItems[type].size === 0) return; if (!confirm(`¿Eliminar ${selectedItems[type].size} elementos?`)) return; data[type] = data[type].filter(item => !selectedItems[type].has(item.id)); selectedItems[type].clear(); await saveToDrive(); updateDisplay() }
+        async function deleteItem(type, id) { if (confirm('¿Eliminar?')) { data[type] = data[type].filter(item => item.id !== id); await saveToDrive(); updateDisplay() } }
+        async function importMovimientos(event) { const file = event.target.files[0]; if (!file) return; Papa.parse(file, { header: true, delimiter: ';', complete: async function (results) { let imported = 0; results.data.forEach(row => { if (!row['Fecha Origen']) return; const fechaParts = row['Fecha Origen'].split('/'); const fecha = `${fechaParts[2]}-${fechaParts[1].padStart(2, '0')}-${fechaParts[0].padStart(2, '0')}`; const importeStr = (row['Importe'] || '0').replace(/,/g, ''); let importe = Math.abs(parseFloat(importeStr)); const moneda = (row['Moneda'] || '').toLowerCase(); const isDollar = moneda.includes('dolar') || moneda.includes('usd'); if (isDollar) importe *= data.dollarRate; let desc = (row['Establecimiento'] || '').trim(); if (isDollar) desc += ' (USD)'; if (importe > 0) { data.expenses.push({ id: Date.now() + Math.random(), date: fecha, description: desc, amount: importe, category: 'Compras', type: 'imported' }); imported++ } }); await saveToDrive(); alert(`✅ ${imported} movimientos importados`); updateDisplay() } }); event.target.value = '' }
+        async function importCuotas(event) { const file = event.target.files[0]; if (!file) return; Papa.parse(file, { header: true, delimiter: ';', complete: async function (results) { let imported = 0; results.data.forEach(row => { if (!row['Fecha Origen']) return; const fechaParts = row['Fecha Origen'].split('/'); const fecha = `${fechaParts[2]}-${fechaParts[1].padStart(2, '0')}-${fechaParts[0].padStart(2, '0')}`; const desc = (row['Establecimiento'] || '').trim(); const importeStr = (row['Importe'] || '0').replace(/,/g, ''); const importe = parseFloat(importeStr); const totalCuotas = parseInt(row['Codigo Plan']) || 0; const pendientes = parseInt(row['Cuotas Pendientes']) || 0; if (importe > 0 && pendientes > 0) { data.installments.push({ id: Date.now() + Math.random(), date: fecha, description: desc, amount: importe, total: totalCuotas, pending: pendientes }); const montoPorCuota = importe / pendientes; const pagadas = totalCuotas - pendientes; const fechaBase = new Date(fecha); for (let i = 0; i < pendientes; i++) { const nuevaFecha = new Date(fechaBase); nuevaFecha.setMonth(nuevaFecha.getMonth() + pagadas + i); data.expenses.push({ id: Date.now() + Math.random(), date: nuevaFecha.toISOString().slice(0, 10), description: `${desc} (Cuota ${pagadas + i + 1}/${totalCuotas})`, amount: montoPorCuota, category: 'Compras', type: 'installment' }) } imported++ } }); await saveToDrive(); alert(`✅ ${imported} cuotas importadas`); updateDisplay() } }); event.target.value = '' }
+        function updateCharts() { const selectedMonth = document.getElementById('monthSelector').value; const monthExpenses = data.expenses.filter(e => e.date.startsWith(selectedMonth)); const isDark = data.theme === 'dark'; const textColor = isDark ? '#f1f5f9' : '#1f2937'; const gridColor = isDark ? '#475569' : '#cbd5e1'; const categoryData = {}; monthExpenses.forEach(e => { categoryData[e.category] = (categoryData[e.category] || 0) + e.amount }); const categoryCtx = document.getElementById('categoryChart'); if (categoryChart) categoryChart.destroy(); categoryChart = new Chart(categoryCtx, { type: 'doughnut', data: { labels: Object.keys(categoryData), datasets: [{ data: Object.values(categoryData), backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16'], borderWidth: 2, borderColor: isDark ? '#1e293b' : '#ffffff' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: textColor, padding: 15, font: { size: 13, weight: 'bold' }, boxWidth: 15, boxHeight: 15 } }, tooltip: { backgroundColor: isDark ? '#1e293b' : '#ffffff', titleColor: textColor, bodyColor: textColor, borderColor: gridColor, borderWidth: 1, padding: 12, titleFont: { size: 14, weight: 'bold' }, bodyFont: { size: 13 } } } } }); const last6Months = []; const incomesByMonth = {}; const expensesByMonth = {}; for (let i = 5; i >= 0; i--) { const d = new Date(); d.setMonth(d.getMonth() - i); const monthKey = d.toISOString().slice(0, 7); last6Months.push(monthKey); incomesByMonth[monthKey] = 0; expensesByMonth[monthKey] = 0 } data.incomes.forEach(inc => { const month = inc.date.slice(0, 7); if (incomesByMonth.hasOwnProperty(month)) { incomesByMonth[month] += inc.amount } }); data.expenses.forEach(exp => { const month = exp.date.slice(0, 7); if (expensesByMonth.hasOwnProperty(month)) { expensesByMonth[month] += exp.amount } }); const trendCtx = document.getElementById('trendChart'); if (trendChart) trendChart.destroy(); trendChart = new Chart(trendCtx, { type: 'line', data: { labels: last6Months.map(m => { const [y, mo] = m.split('-'); return `${mo}/${y.slice(2)}` }), datasets: [{ label: 'Ingresos', data: last6Months.map(m => incomesByMonth[m]), borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 3, tension: 0.4, pointRadius: 5, pointHoverRadius: 7, pointBackgroundColor: '#10b981' }, { label: 'Gastos', data: last6Months.map(m => expensesByMonth[m]), borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderWidth: 3, tension: 0.4, pointRadius: 5, pointHoverRadius: 7, pointBackgroundColor: '#ef4444' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { color: textColor, padding: 15, font: { size: 13, weight: 'bold' }, boxWidth: 15, boxHeight: 15 } }, tooltip: { backgroundColor: isDark ? '#1e293b' : '#ffffff', titleColor: textColor, bodyColor: textColor, borderColor: gridColor, borderWidth: 1, padding: 12, titleFont: { size: 14, weight: 'bold' }, bodyFont: { size: 13 } } }, scales: { y: { beginAtZero: true, ticks: { color: textColor, font: { size: 12, weight: 'bold' }, padding: 10 }, grid: { color: gridColor, lineWidth: 1 } }, x: { ticks: { color: textColor, font: { size: 12, weight: 'bold' }, padding: 10 }, grid: { color: gridColor, lineWidth: 1 } } } } }) }
+        function updateDisplay() { const selectedMonth = document.getElementById('monthSelector').value; const categoryFilter = document.getElementById('categoryFilter').value; let monthExpenses = data.expenses.filter(e => e.date.startsWith(selectedMonth)); if (categoryFilter) { monthExpenses = monthExpenses.filter(e => e.category === categoryFilter) } const monthIncomes = data.incomes.filter(i => i.date.startsWith(selectedMonth)); const futureInst = data.expenses.filter(e => e.type === 'installment'); const totalExp = monthExpenses.reduce((sum, e) => sum + e.amount, 0); const totalInc = monthIncomes.reduce((sum, i) => sum + i.amount, 0); const totalFut = futureInst.reduce((sum, e) => sum + e.amount, 0); const balance = totalInc - totalExp; document.getElementById('totalExpenses').textContent = '$' + totalExp.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); document.getElementById('totalIncomes').textContent = '$' + totalInc.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); document.getElementById('balance').textContent = '$' + balance.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); document.getElementById('futureInstallments').textContent = '$' + totalFut.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); const balanceCard = document.getElementById('balanceCard'); if (balance < 0) { balanceCard.className = 'stat-card bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-6 text-white shadow-xl' } else { balanceCard.className = 'stat-card bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white shadow-xl' } let expHTML = monthExpenses.length === 0 ? '<p class="text-center text-gray-400 py-12">No hay gastos</p>' : ''; monthExpenses.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(e => { const isSelected = selectedItems.expenses.has(e.id); expHTML += `<div class="flex justify-between items-center border-b py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition"><input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleItemSelection('expenses',${e.id},this)" class="mr-2"><div class="flex-1 text-sm text-gray-700">${e.date}</div><div class="flex-2 px-2 font-semibold text-gray-800">${e.description}</div><div class="flex-1 text-sm text-gray-600">${e.category}</div><div class="flex-1 text-right font-bold text-red-600">${e.amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</div><button onclick="editExpense(${e.id})" class="ml-2 text-blue-600 hover:text-blue-800 text-lg">✏️</button><button onclick="deleteItem('expenses',${e.id})" class="ml-2 text-red-600 hover:text-red-800 text-lg">🗑️</button></div>` }); document.getElementById('expensesList').innerHTML = expHTML; updateSelectionUI('expenses'); let incHTML = monthIncomes.length === 0 ? '<p class="text-center text-gray-400 py-12">No hay ingresos</p>' : ''; monthIncomes.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(i => { const isSelected = selectedItems.incomes.has(i.id); incHTML += `<div class="flex justify-between items-center border-b py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition"><input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleItemSelection('incomes',${i.id},this)" class="mr-2"><div class="flex-1 text-sm text-gray-700">${i.date}</div><div class="flex-2 px-2 font-semibold text-gray-800">${i.description}</div><div class="flex-1 text-sm text-gray-600">${i.type}</div><div class="flex-1 text-right font-bold text-green-600">${i.amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</div><button onclick="editIncome(${i.id})" class="ml-2 text-blue-600 hover:text-blue-800 text-lg">✏️</button><button onclick="deleteItem('incomes',${i.id})" class="ml-2 text-red-600 hover:text-red-800 text-lg">🗑️</button></div>` }); document.getElementById('incomesList').innerHTML = incHTML; updateSelectionUI('incomes'); let instHTML = data.installments.length === 0 ? '<p class="text-center text-gray-400 py-12">No hay cuotas</p>' : ''; data.installments.sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(inst => { const isSelected = selectedItems.installments.has(inst.id); instHTML += `<div class="flex justify-between items-center border-b py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition"><input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleItemSelection('installments',${inst.id},this)" class="mr-2"><div class="flex-1 text-sm text-gray-700">${inst.date}</div><div class="flex-2 px-2 font-semibold text-gray-800">${inst.description}</div><div class="flex-1 text-center"><span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-bold">${inst.pending}/${inst.total}</span></div><div class="flex-1 text-right font-bold text-purple-600">${inst.amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</div><button onclick="deleteItem('installments',${inst.id})" class="ml-2 text-red-600 hover:text-red-800 text-lg">🗑️</button></div>` }); document.getElementById('installmentsList').innerHTML = instHTML; updateSelectionUI('installments'); updateCharts() }
+        window.onload = function () { const today = new Date().toISOString().slice(0, 7); document.getElementById('monthSelector').value = today; document.getElementById('expDate').value = new Date().toISOString().slice(0, 10); document.getElementById('incDate').value = new Date().toISOString().slice(0, 10); document.getElementById('monthSelector').addEventListener('change', updateDisplay); const firstTab = document.querySelector('.tab-btn'); if (firstTab) firstTab.classList.add('tab-active'); gapiLoaded() };
+    </script>
+    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+</body>
+
+</html>
