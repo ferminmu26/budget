@@ -3,8 +3,9 @@ const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/logo.png'
-  // No es necesario cachear los logos de 192 y 512 si no existen
+  '/logo.png',
+  '/screenshot1.png', // <-- Archivo nuevo
+  '/screenshot2.png'  // <-- Archivo nuevo
 ];
 
 // Evento de instalación: guarda los archivos en la caché
