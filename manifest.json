@@ -8,30 +8,16 @@
   "description": "App personal para la gestión de presupuestos y finanzas.",
   "icons": [
     {
-      "src": "logo-192.png",
+      "src": "logo.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "logo-512.png",
+      "src": "logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "screenshot1.png",
-      "sizes": "540x720",
-      "type": "image/png",
-      "form_factor": "narrow"
-    },
-    {
-      "src": "screenshot2.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide"
     }
   ]
 }
