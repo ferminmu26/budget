@@ -1,9 +1,8 @@
-const CACHE_NAME = 'finanza-mia-cache-v5'; // Incrementamos la versión para forzar la actualización
+const CACHE_NAME = 'finanza-mia-cache-v8'; // Nueva versión para forzar la actualización
 const urlsToCache = [
   '/',
   '/index.html',
-  '/manifest.json',
-  '/logo.png' // Solo cacheamos el logo que realmente existe
+  '/manifest.json'
 ];
 
 // Evento de instalación: guarda los archivos en la caché
@@ -11,7 +10,7 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Opened cache and caching files');
+        console.log('Opened cache and caching essential files');
         return cache.addAll(urlsToCache);
       })
   );
@@ -39,7 +38,6 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        // Si el archivo está en la caché, lo devuelve. Si no, lo busca en la red.
         return response || fetch(event.request);
       })
   );
