@@ -1,14 +1,12 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-import json
 
 st.set_page_config(page_title="Mi Presupuesto", page_icon="💰", layout="wide")
 
 st.markdown("""
 <style>
     .main {background: linear-gradient(to bottom right, #eff6ff, #f5f3ff);}
-    .stMetric {background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);}
 </style>
 """, unsafe_allow_html=True)
 
@@ -55,13 +53,13 @@ with tabs[0]:
     
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.metric("Ingresos", f"${month_incomes:,.2f}", delta="💚")
+        st.metric("Ingresos", f"${month_incomes:,.2f}")
     with col2:
-        st.metric("Gastos", f"${month_expenses:,.2f}", delta="💸", delta_color="inverse")
+        st.metric("Gastos", f"${month_expenses:,.2f}")
     with col3:
-        st.metric("Balance", f"${balance:,.2f}", delta="✅" if balance >= 0 else "⚠️")
+        st.metric("Balance", f"${balance:,.2f}")
     with col4:
-        st.metric("Cuotas Futuras", f"${future_installments:,.2f}", delta="📆")
+        st.metric("Cuotas Futuras", f"${future_installments:,.2f}")
     
     st.divider()
     
@@ -254,18 +252,3 @@ with tabs[3]:
 
 st.divider()
 st.caption("💡 Aplicación de Presupuesto Personal - Streamlit Cloud")
-```
-
-4. Click en **"Commit changes"** (abajo)
-5. Click en **"Commit changes"** nuevamente en el popup
-
----
-
-### **Archivo 2: `requirements.txt`**
-
-1. En tu repositorio, click en **"Add file"** → **"Create new file"**
-2. Nombre del archivo: `requirements.txt`
-3. Escribe exactamente esto:
-```
-streamlit
-pandas
