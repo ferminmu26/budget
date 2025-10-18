@@ -362,5 +362,17 @@ function updateDisplay(){const selectedMonth=document.getElementById('monthSelec
 window.onload=function(){const today=new Date().toISOString().slice(0,7);document.getElementById('monthSelector').value=today;document.getElementById('expDate').value=new Date().toISOString().slice(0,10);document.getElementById('incDate').value=new Date().toISOString().slice(0,10);document.getElementById('monthSelector').addEventListener('change',updateDisplay);const firstTab=document.querySelector('.tab-btn');if(firstTab)firstTab.classList.add('tab-active');gapiLoaded()};
 </script>
 <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').then(registration => {
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+      }, err => {
+        console.log('ServiceWorker registration failed: ', err);
+      });
+    });
+  }
+</script>
 </body>
 </html>
+
