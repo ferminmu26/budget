@@ -1,11 +1,12 @@
-const CACHE_NAME = 'finanza-mia-cache-v2'; // Incrementamos la versión del caché
+const CACHE_NAME = 'finanza-mia-cache-v3'; // Incrementamos la versión para forzar actualización
 const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/logo.png',
-  '/screenshot1.png', // <-- Archivo nuevo
-  '/screenshot2.png'  // <-- Archivo nuevo
+  '/logo-192.png',
+  '/logo-512.png',
+  '/screenshot1.png',
+  '/screenshot2.png'
 ];
 
 // Evento de instalación: guarda los archivos en la caché
@@ -41,7 +42,6 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        // Si el archivo está en la caché, lo devuelve. Si no, lo busca en la red.
         return response || fetch(event.request);
       })
   );
